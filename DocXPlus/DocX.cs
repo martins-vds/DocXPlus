@@ -391,6 +391,27 @@ namespace DocXPlus
         }
 
         /// <summary>
+        /// Creates a new document using the supplied template
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static DocX CreateFromTemplate(string path)
+        {
+            var docX = new DocX();
+
+            var tempFile = Path.GetTempFileName();
+
+            File.Copy(path, tempFile);
+
+            var doc = WordprocessingDocument.Open(tempFile, true);
+            doc.ChangeDocumentType(WordprocessingDocumentType.Document);
+
+            docX.Create(doc);
+
+            return docX;
+        }
+
+        /// <summary>
         /// Adds three footers to the document (default, even and first).
         /// </summary>
         public void AddFooters()
@@ -703,16 +724,23 @@ namespace DocXPlus
             part.Header = header;
         }
 
-        internal void Create(WordprocessingDocument doc)
+        internal void Create(WordprocessingDocument doc, bool createFromTemplate = false)
         {
             document = doc;
 
-            doc.AddMainDocumentPart();
+            if (createFromTemplate)
+            {
+                MainDocumentPart.Document = doc.MainDocumentPart.Document;
+            }
+            else
+            {
+                doc.AddMainDocumentPart();
 
-            MainDocumentPart.Document = new Document();
-            MainDocumentPart.Document.AppendChild(new Body());
+                MainDocumentPart.Document = new Document();
+                MainDocumentPart.Document.AppendChild(new Body());
 
-            PostCreate();
+                PostCreate();
+            }
         }
 
         internal SectionProperties GetBodySectionProperty()
