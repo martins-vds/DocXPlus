@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Authors>Glen Conway</Authors>
-    <FileVersion>1.0.3.0</FileVersion>
+    <Version Condition=" '$(BUILD_BUILDNUMBER)' == '' ">0.0.1-local</Version>
+    <Version Condition=" '$(BUILD_BUILDNUMBER)' != '' ">$(BUILD_BUILDNUMBER)</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\netstandard1.3\DocXPlus.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\netstandard2.0\DocXPlus.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
