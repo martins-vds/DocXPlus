@@ -65,6 +65,15 @@ namespace DocXPlus
             }
         }
 
+        public Drawing AppendImage(byte[] data, string contentType, Int64Value width, Int64Value height, string name = "")
+        {
+            var image = AddImage(data, contentType, width, height, name);
+
+            AddParagraph().Append(image);
+
+            return image;
+        }
+
         /// <summary>
         /// Adds a paragraph
         /// </summary>

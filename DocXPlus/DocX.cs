@@ -401,12 +401,13 @@ namespace DocXPlus
 
             var tempFile = Path.GetTempFileName();
 
+            File.Delete(tempFile);
             File.Copy(path, tempFile);
 
             var doc = WordprocessingDocument.Open(tempFile, true);
             doc.ChangeDocumentType(WordprocessingDocumentType.Document);
 
-            docX.Create(doc);
+            docX.Create(doc, createFromTemplate: true);
 
             return docX;
         }
@@ -461,6 +462,11 @@ namespace DocXPlus
                 AddHeader(HeaderFooterValues.Even),
                 AddHeader(HeaderFooterValues.First)
             };
+        }
+
+        public List AddList()
+        {
+            return new List(this);
         }
 
         /// <summary>
@@ -618,11 +624,18 @@ namespace DocXPlus
                 name = Guid.NewGuid().ToString();
             }
 
+            double englishMetricUnitsPerInch = 914400;
+            double pixelsPerInch = 96;
+
+            //calculate size in emu
+            double emuWidth = width * englishMetricUnitsPerInch / pixelsPerInch;
+            double emuHeight = height * englishMetricUnitsPerInch / pixelsPerInch;
+
             // Define the reference of the image.
             var element =
                  new Drawing(
                      new DW.Inline(
-                         new DW.Extent() { Cx = width, Cy = height },
+                         new DW.Extent() { Cx = (Int64Value)emuWidth, Cy = (Int64Value)emuHeight },
                          new DW.EffectExtent()
                          {
                              LeftEdge = 0L,
@@ -632,7 +645,7 @@ namespace DocXPlus
                          },
                          new DW.DocProperties()
                          {
-                             Id = System.Convert.ToUInt32(PropId),
+                             Id = System.Convert.ToUInt32(1U),
                              Name = Guid.NewGuid().ToString()
                          },
                          new DW.NonVisualGraphicFrameDrawingProperties(
@@ -643,7 +656,7 @@ namespace DocXPlus
                                      new PIC.NonVisualPictureProperties(
                                          new PIC.NonVisualDrawingProperties()
                                          {
-                                             Id = System.Convert.ToUInt32(PropId),
+                                             Id = System.Convert.ToUInt32(0U),
                                              Name = name
                                          },
                                          new PIC.NonVisualPictureDrawingProperties()),
@@ -666,7 +679,7 @@ namespace DocXPlus
                                      new PIC.ShapeProperties(
                                          new A.Transform2D(
                                              new A.Offset() { X = 0L, Y = 0L },
-                                             new A.Extents() { Cx = width, Cy = height }),
+                                             new A.Extents() { Cx = (Int64Value)emuWidth, Cy = (Int64Value)emuHeight }),
                                          new A.PresetGeometry(
                                              new A.AdjustValueList()
                                          )
@@ -678,7 +691,8 @@ namespace DocXPlus
                          DistanceFromTop = (UInt32Value)0U,
                          DistanceFromBottom = (UInt32Value)0U,
                          DistanceFromLeft = (UInt32Value)0U,
-                         DistanceFromRight = (UInt32Value)0U
+                         DistanceFromRight = (UInt32Value)0U,
+                         EditId = "50D07946"
                      });
 
             return element;
@@ -728,11 +742,7 @@ namespace DocXPlus
         {
             document = doc;
 
-            if (createFromTemplate)
-            {
-                MainDocumentPart.Document = doc.MainDocumentPart.Document;
-            }
-            else
+            if (!createFromTemplate)
             {
                 doc.AddMainDocumentPart();
 
@@ -859,7 +869,7 @@ namespace DocXPlus
         /// <returns></returns>
         protected override string AddImagePart(Stream stream, string contentType)
         {
-            var imagePart = MainDocumentPart.AddImagePart(contentType);
+            var imagePart = MainDocumentPart.AddImagePart(ImagePartType.Png);
             imagePart.FeedData(stream);
 
             return MainDocumentPart.GetIdOfPart(imagePart);
