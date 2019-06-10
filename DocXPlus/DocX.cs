@@ -1,10 +1,13 @@
 ﻿using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using OpenXmlPowerTools;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml;
+using System.Xml.Linq;
 using A = DocumentFormat.OpenXml.Drawing;
 using DW = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
@@ -469,6 +472,49 @@ namespace DocXPlus
             return new List(this);
         }
 
+        public DocX AddToC(string title = null)
+        {
+            var tableOfContents = new TableOfContents(document);
+
+            var lastParagraph = MainDocumentPart
+                                    .GetXDocument()
+                                    .Descendants(W.p)
+                                    .LastOrDefault();
+
+            if(lastParagraph == null)
+            {
+                var xdoc = MainDocumentPart.GetXDocument();
+
+                xdoc.Add(XElement.Parse(Body.OuterXml));
+                MainDocumentPart.PutXDocument();
+
+                lastParagraph = MainDocumentPart
+                                    .GetXDocument()
+                                    .Descendants(W.p)
+                                    .LastOrDefault();
+            }
+
+            tableOfContents.AddToc(lastParagraph, @"TOC \o '1-3' \h \z \u", title, null);
+
+            return this;
+        }
+
+        public DocX UpdateFields()
+        {
+            if(MainDocumentPart.DocumentSettingsPart == null)
+            {
+                MainDocumentPart.AddNewPart<DocumentSettingsPart>();
+            }
+            else if (MainDocumentPart.DocumentSettingsPart.Settings == null)
+            {
+                MainDocumentPart.DocumentSettingsPart.Settings = new Settings();
+            }
+
+            MainDocumentPart.DocumentSettingsPart.Settings.Append(new UpdateFieldsOnOpen() { Val = new OnOffValue(true) });
+
+            return this;
+        }
+
         /// <summary>
         /// Saves and closes the document.
         /// </summary>
@@ -509,6 +555,39 @@ namespace DocXPlus
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public void ReplaceText(string textToReplace, string replacement)
+        {
+            Action<IEnumerable<Text>, string, string> Replace = (textElements, placeholder, text) =>
+            {
+                foreach (var textElement in textElements) // <<< Here
+                {
+                    if (textElement.Text.Contains(placeholder))
+                    {
+                        textElement.Text = textElement.Text.Replace(placeholder, text);
+                    }
+                }
+            };
+
+            var document = MainDocumentPart.Document;
+            var textElementsInDocument = document.Descendants<Text>();
+
+            Replace(textElementsInDocument, textToReplace, replacement);
+
+            var headers = MainDocumentPart.HeaderParts;
+            foreach (var header in headers)
+            {
+                var textElementsInHeader = header.Header.Descendants<Text>();
+                Replace(textElementsInHeader, textToReplace, replacement);
+            }
+
+            var footers = MainDocumentPart.FooterParts;
+            foreach (var footer in footers)
+            {
+                var textElementsInFooter = footer.Footer.Descendants<Text>();
+                Replace(textElementsInFooter, textToReplace, replacement);
+            }
         }
 
         /// <summary>
