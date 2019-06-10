@@ -111,5 +111,10 @@
         {
             return (DocumentFormat.OpenXml.WordprocessingDocumentType)((int)value);
         }
+
+        internal static string ToWordprocessingColor(DocXPlus.Enums.Color color)
+        {
+            return color.ToString("X").TrimStart('0');
+        }
     }
 }

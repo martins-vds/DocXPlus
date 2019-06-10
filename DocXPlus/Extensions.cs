@@ -14,6 +14,12 @@ namespace DocXPlus
             prop.Val = true;
         }
 
+        internal static void Color(this Run run, Enums.Color color)
+        {
+            RunProperties runProperties = run.GetOrCreate<RunProperties>(true);
+            runProperties.Color = new Color() { Val = Convert.ToWordprocessingColor(color) };
+        }
+
         internal static OpenXmlElement Find<T>(this OpenXmlCompositeElement element) where T : OpenXmlElement, new()
         {
             if (element.Elements<T>().Count() > 0)

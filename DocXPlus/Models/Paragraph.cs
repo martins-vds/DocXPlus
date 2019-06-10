@@ -400,6 +400,23 @@ namespace DocXPlus
             return this;
         }
 
+        public Paragraph Color(DocXPlus.Enums.Color color)
+        {
+            if (Runs.Count() == 0)
+            {
+                
+            }
+            else
+            {
+                foreach (var run in Runs)
+                {
+                    run.Color(color);
+                }
+            }
+
+            return this;
+        }
+
         /// <summary>
         /// Sets the paragraph alignment
         /// </summary>
@@ -502,7 +519,7 @@ namespace DocXPlus
             };
 
             run.AppendChild(t);
-
+            
             return run;
         }
     }
